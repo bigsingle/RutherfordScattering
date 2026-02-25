@@ -1,1 +1,90 @@
-<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Rutherford Scattering Simulation</title>\n    <style>\n        body {\n            background-color: black;\n            color: white;\n            font-family: Arial, sans-serif;\n            text-align: center;\n        }\n        #simulationArea {\n            width: 800px;\n            height: 600px;\n            border: 2px solid white;\n            position: relative;\n            margin: auto;\n        }\n        button {\n            padding: 10px 20px;\n            font-size: 16px;\n            margin-top: 20px;\n        }\n    </style>\n</head>\n<body>\n    <h1>Rutherford Scattering Simulation</h1>\n    <div id="simulationArea"></div>\n    <button id="toggleButton">Start Simulation</button>\n    <script>\n        let isRunning = false;\n        const toggleButton = document.getElementById('toggleButton');\n        const simulationArea = document.getElementById('simulationArea');\n        let particles = [];\n        const numParticles = 100;\n        const CoulombConstant = 8.9875517873681764e9; // N m²/C²\n\n        function initializeParticles() {\n            for (let i = 0; i < numParticles; i++) {\n                const particle = {\n                    x: Math.random() * 800,\n                    y: Math.random() * 600,\n                    vx: (Math.random() - 0.5) * 2,\n                    vy: (Math.random() - 0.5) * 2,\n                    charge: 1,\n                };\n                particles.push(particle);\n            }\n        }\n\n        function updateParticles() {\n            for (let i = 0; i < particles.length; i++) {\n                for (let j = i + 1; j < particles.length; j++) {\n                    const dx = particles[j].x - particles[i].x;\n                    const dy = particles[j].y - particles[i].y;\n                    const distance = Math.sqrt(dx * dx + dy * dy);\n                    if (distance > 0) {\n                        const force = (CoulombConstant * particles[i].charge * particles[j].charge) / (distance * distance);\n                        const angle = Math.atan2(dy, dx);\n                        particles[i].vx += Math.cos(angle) * force;\n                        particles[i].vy += Math.sin(angle) * force;\n                        particles[j].vx -= Math.cos(angle) * force;\n                        particles[j].vy -= Math.sin(angle) * force;\n                    }\n                }\n                particles[i].x += particles[i].vx;\n                particles[i].y += particles[i].vy;\n                if (particles[i].x < 0 || particles[i].x > 800 || particles[i].y < 0 || particles[i].y > 600) {\n                    particles[i].vx *= -1;\n                    particles[i].vy *= -1;\n                }\n            }\n        }\n\n        function drawParticles() {\n            simulationArea.innerHTML = '';\n            particles.forEach(particle => {\n                const particleElement = document.createElement('div');\n                particleElement.style.width = '5px';\n                particleElement.style.height = '5px';\n                particleElement.style.backgroundColor = 'red';\n                particleElement.style.position = 'absolute';\n                particleElement.style.left = particle.x + 'px';\n                particleElement.style.top = particle.y + 'px';\n                simulationArea.appendChild(particleElement);\n            });\n        }\n\n        function simulate() {\n            updateParticles();\n            drawParticles();\n            if (isRunning) {\n                requestAnimationFrame(simulate);\n            }\n        }\n\n        toggleButton.addEventListener('click', () => {\n            isRunning = !isRunning;\n            toggleButton.textContent = isRunning ? 'Stop Simulation' : 'Start Simulation';\n            if (isRunning) {\n                requestAnimationFrame(simulate);\n            }\n        });\n\n        initializeParticles();\n    </script>\n</body>\n</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutherford Scattering Simulation</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            background-color: #e0e0e0;
+        }
+        #controls {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rutherford Scattering Simulation</h1>
+    <canvas id="simulationCanvas" width="800" height="600"></canvas>
+    <div id="controls">
+        <label for="numParticles">Number of particles:</label>
+        <input type="number" id="numParticles" value="100" min="1" max="1000">
+        <button id="startSimulation">Start Simulation</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        const nucleus = { x: canvas.width / 2, y: canvas.height / 2, radius: 20, charge: 1000 };
+        let particles = [];
+
+        function Particle(x, y, angle, speed) {
+            this.x = x;
+            this.y = y;
+            this.angle = angle;
+            this.speed = speed;
+            this.radius = 5;
+        }
+
+        Particle.prototype.update = function() {
+            // Update particle position based on speed and angle
+            this.x += this.speed * Math.cos(this.angle);
+            this.y += this.speed * Math.sin(this.angle);
+            // Simulate Coulomb force
+            const dx = nucleus.x - this.x;
+            const dy = nucleus.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const force = nucleus.charge / (distance * distance); // Simplified force calculation
+            this.angle += (force > 0 ? Math.atan2(dy, dx) : 0);
+        };
+
+        function drawNucleus() {
+            ctx.beginPath();
+            ctx.arc(nucleus.x, nucleus.y, nucleus.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'gold';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawParticles() {
+            particles.forEach(particle => {
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'blue';
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawNucleus();
+            drawParticles();
+            particles.forEach(p => p.update());
+            requestAnimationFrame(update);
+        }
+
+        document.getElementById('startSimulation').onclick = function() {
+            const numParticles = document.getElementById('numParticles').value;
+            particles = [];
+            for (let i = 0; i < numParticles; i++) {
+                const angle = Math.random() * 2 * Math.PI;
+                const speed = Math.random() * 2 + 1;
+                const particle = new Particle(Math.random() * canvas.width, Math.random() * canvas.height, angle, speed);
+                particles.push(particle);
+            }
+            update();
+        };
+    </script>
+</body>
+</html>
