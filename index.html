@@ -1,1 +1,35 @@
-<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Rutherford Scattering Simulation</title>\n    <style>\n        canvas { border: 1px solid black; }\n    </style>\n</head>\n<body>\n    <h1>Rutherford Scattering Simulation</h1>\n    <canvas id="simulationCanvas" width="800" height="600"></canvas>\n    <script>\n        const canvas = document.getElementById('simulationCanvas');\n        const ctx = canvas.getContext('2d');\n        const numParticles = 100;\n\n        function drawParticle(x, y) {\n            ctx.beginPath();\n            ctx.arc(x, y, 5, 0, Math.PI * 2);\n            ctx.fillStyle = 'orange';\n            ctx.fill();\n            ctx.closePath();\n        }\n\n        function simulate() {\n            ctx.clearRect(0, 0, canvas.width, canvas.height);\n            for (let i = 0; i < numParticles; i++) {\n                const x = Math.random() * canvas.width;\n                const y = Math.random() * canvas.height;\n                drawParticle(x, y);\n            }\n        }\n\n        simulate();\n    </script>\n</body>\n</html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ラザフォード散乱シミュレーション</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>ラザフォード散乱シミュレーション</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>初速度: <span id="velocityValue">5.0</span> (相対値)</label>
+                <input type="range" id="velocitySlider" min="1" max="20" value="5" step="0.1">
+            </div>
+            
+            <div class="button-group">
+                <button id="startBtn" class="btn btn-start">スタート</button>
+                <button id="stopBtn" class="btn btn-stop">ストップ</button>
+                <button id="resetBtn" class="btn btn-reset">リセット</button>
+            </div>
+            
+            <div class="button-group">
+                <button id="traceBtn" class="btn btn-trace">軌跡表示: ON</button>
+            </div>
+        </div>
+        
+        <canvas id="canvas" width="1000" height="600"></canvas>
+    </div>
+    
+    <script src="rutherford.js"></script>
+</body>
+</html>
