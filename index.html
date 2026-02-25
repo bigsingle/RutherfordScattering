@@ -4,34 +4,121 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rutherford Scattering Simulation</title>
-    <script>
-        let simulationRunning = false;
-        let coulombForce;
-
-        function toggleSimulation() {
-            const button = document.getElementById('toggleButton');
-            simulationRunning = !simulationRunning;
-            button.innerText = simulationRunning ? 'Stop Simulation' : 'Start Simulation';
-            if (simulationRunning) {
-                runSimulation();
-            }
-        }
-
-        function runSimulation() {
-            // Calculate Coulomb force: F = k * (q1 * q2) / r^2
-            const k = 8.99e9; // Coulomb's constant in N m²/C²
-            const qAlpha = 2 * 1.6e-19; // Charge of alpha particle (2e)
-            const qGold = 79 * 1.6e-19; // Charge of gold nucleus (79e)
-            const r = 1e-12; // Distance between alpha particle and gold nucleus in meters
-            coulombForce = k * (qAlpha * qGold) / (r * r);
-            console.log('Coulomb Force:', coulombForce);
-            // Logic for the simulation goes here...
-            // If you want to run it continuously, use `requestAnimationFrame(runSimulation);`
-        }
-    </script>
+    <style>
+        canvas { border: 1px solid black; }
+    </style>
 </head>
 <body>
     <h1>Rutherford Scattering Simulation</h1>
-    <button id="toggleButton" onclick="toggleSimulation()">Start Simulation</button>
+    <canvas id="canvas" width="800" height="400"></canvas>
+    <div>
+        <button id="toggleSimulation">Start/Stop Simulation</button>
+        <input type="range" id="velocitySlider" min="1" max="100" value="50"> Velocity
+        <button id="resetSimulation">Reset</button>
+        <button id="toggleTrace">Trace On/Off</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const k = 8.99e9;  // Coulomb's constant
+        const qAlpha = 2e-19; // Charge of alpha particle
+        const qGold = 79e-19; // Charge of gold nucleus
+        const radiusNucleus = 10;
+        let alphaParticles = [];
+        let simulationRunning = false;
+        let traceEnabled = false;
+
+        // Initialize particles
+        for (let i = 0; i < 15; i++) {
+            alphaParticles.push({
+                x: Math.random() * 100,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 5,
+                vy: (Math.random() - 0.5) * 5,
+                traces: []
+            });
+        }
+
+        // Nucleus fixed position
+        const nucleus = { x: canvas.width - 100, y: canvas.height / 2 };
+
+        function calculateCoulombForce(particle) {
+            const dx = nucleus.x - particle.x;
+            const dy = nucleus.y - particle.y;
+            const r = Math.sqrt(dx * dx + dy * dy);
+            const force = k * qAlpha * qGold / (r * r);
+            return {
+                fx: (dx / r) * force,
+                fy: (dy / r) * force
+            };
+        }
+
+        function updateParticles() {
+            alphaParticles.forEach(p => {
+                if (simulationRunning) {
+                    const { fx, fy } = calculateCoulombForce(p);
+                    p.vx += fx;
+                    p.vy += fy;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (traceEnabled) {
+                        p.traces.push({ x: p.x, y: p.y });
+                    }
+                }
+            });
+        }
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            ctx.arc(nucleus.x, nucleus.y, radiusNucleus, 0, Math.PI * 2);
+            ctx.fill();
+
+            alphaParticles.forEach(p => {
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (traceEnabled) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    p.traces.forEach(trace => {
+                        ctx.beginPath();
+                        ctx.arc(trace.x, trace.y, 1, 0, Math.PI * 2);
+                        ctx.stroke();
+                    });
+                }
+            });
+        }
+
+        function animate() {
+            if (simulationRunning) {
+                updateParticles();
+                drawParticles();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        document.getElementById('toggleSimulation').onclick = () => {
+            simulationRunning = !simulationRunning;
+            if (simulationRunning) animate();
+        };
+
+        document.getElementById('resetSimulation').onclick = () => {
+            alphaParticles.forEach(p => {
+                p.x = Math.random() * 100;
+                p.y = Math.random() * canvas.height;
+                p.vx = (Math.random() - 0.5) * 5;
+                p.vy = (Math.random() - 0.5) * 5;
+                p.traces = [];
+            });
+        };
+
+        document.getElementById('toggleTrace').onclick = () => {
+            traceEnabled = !traceEnabled;
+        };
+    </script>
 </body>
 </html>
